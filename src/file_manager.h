@@ -18,6 +18,7 @@ typedef struct {
     str_t raw_data;                 // raw data load from old file (do not edit it's using for referent pointer)
     str_t buffer_data;              // buffer for new data
     stage_file_t stage_file;        // stage of file manager
+    char *start,*end;               // pointer working with raw data
 }FileManager_t;
 
 /*
@@ -33,11 +34,24 @@ FileManager_t INIT_FILE_MANAGER(){
                 .buffer = NULL,
                 .capacity = -1
             },
-        .stage_file = NOTTHING
+        .stage_file = NOTTHING,
+        .start = NULL,
+        .end = NULL
     };
 }
 
 FileManager_t file_manager;         // global file manager
+const char * all_path[] = {         // global file path
+    "../data/mon.bin",
+    "../data/tue.bin",
+    "../data/wed.bin",
+    "../data/thu.bin",
+    "../data/fri.bin",
+    "../data/sat.bin",
+    "../data/sun.bin"
+};
+const char* magic_bype = "\"*\"";
+#define CAPACITY_FILE_PATH 7
 
 /*
     reset and initailize
@@ -59,6 +73,9 @@ int fo_reset(){
     file_manager = INIT_FILE_MANAGER();
     return 1;
 }
+
+#define is_raw_data_emtpy file_manager.raw_data.buffer ? 0 : 1
+#define is_buffer_data_emtpy file_manager.buffer_data.buffer ? 0 : 1
 
 /*
     if sign force == 1 it will force to valid and it will reset all data in file manager 
@@ -115,5 +132,97 @@ int fo_load(const char *path,int8_t sign_force){
 
     file_manager.stage_file = LOADED;
     fclose(fp);
+    return 1;
+}
+
+/*
+    if  sign force == 1 it will force to valid and it will reset all data in file manager
+        sign force == 2 is init file
+*/
+/*
+    mode argument:
+        1 for write to the end (raw data + buffer data)
+        2 for write to the middle (raw data to pointer start + buffer data + pointer end to end raw data)
+*/
+#define WRITE_END 1
+#define WRITE_MIDDLE 2
+int fo_write(const char* path,int8_t sign_force,int8_t mode){ // TODO: test this function
+    if(sign_force == 2){
+        // initailize file
+        FILE* fp = NULL;
+        for(int i = 0; i < CAPACITY_FILE_PATH; i++){
+            fp = fopen(all_path[i], "wb");
+            fwrite(magic_bype,BYPE,3,fp); // 3 is size of magic bype
+            fclose(fp);
+        }
+        return 1;
+    }
+    if(is_buffer_data_emtpy || is_raw_data_emtpy){
+        emtpy:
+        WARNING("raw data or new data to write is" ANSI_COLOR_RED " Empty " ANSI_COLOR_RESET);
+        return 0;
+    }
+    if(sign_force == 1){
+        goto valid;
+    }
+    switch (file_manager.stage_file)
+    {
+        case NOTTHING:
+            goto emtpy;
+            break;
+        case WRITED:{
+            WARNING("File is out of date you already write it");
+            return 0;
+            break;
+        }
+        case LOADED:{
+            WARNING("Nothing change in your File");
+            return 0;
+            break;
+        }
+        case EDITED:
+            goto valid;
+            break;
+        default:
+            break;
+    }
+    valid:
+    switch (mode)
+    {
+        case WRITE_END:{
+            FILE* fp = fopen(path, "wb");
+            if(!fp){
+                error_open_file:
+                WARNING("Can't open file with path: %s", path);
+                return 0;
+            }
+            fwrite(file_manager.raw_data.buffer, BYPE,
+                    file_manager.raw_data.capacity, fp);
+            fwrite(file_manager.buffer_data.buffer, BYPE,
+                    file_manager.buffer_data.capacity, fp);
+            fclose(fp);
+            break;
+        }
+        case WRITE_MIDDLE:{
+            FILE* fp = fopen(path, "wb");
+            if(!fp){
+                goto error_open_file;
+            }
+            size_t len = file_manager.start - file_manager.raw_data.buffer;
+            fwrite(file_manager.raw_data.buffer, BYPE, len, fp);
+            fwrite(file_manager.buffer_data.buffer, BYPE,
+                    file_manager.buffer_data.capacity, fp);
+            // this make sure pointer of end and start is in between file_manger.raw_data.buffer
+            // in function manager this both pointer should handle it
+            len = file_manager.raw_data.capacity - len - (file_manager.end - file_manager.start);
+            fwrite(file_manager.end, BYPE, len, fp);
+            fclose(fp);
+            break;
+        }
+        default:
+            WARNING("Invalid file write mode is %d", mode);
+            return 0;
+            break;
+    }
     return 1;
 }

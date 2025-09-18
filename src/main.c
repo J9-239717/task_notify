@@ -9,6 +9,7 @@ int main(int argc,char *argv[]){
         fo_load("../data/mon.bin", 0);
         INFO("%s", file_manager.raw_data.buffer);
         fo_reset();
+        fo_write("temp", 0, WRITE_END);
     }else {
         // case handle argv
         printf("Run and End\n");
