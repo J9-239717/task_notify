@@ -1,6 +1,11 @@
 {
     "files.associations": {
         "*.dbclient-js": "javascript",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "errno.h": "c",
+        "crtdefs.h": "c",
+        "corecrt.h": "c",
+        "_include.h": "c",
+        "test": "c"
     }
 }
