@@ -52,6 +52,13 @@ const char * all_path[] = {         // global file path
 };
 const char* magic_bype = "\"*\"";
 #define CAPACITY_FILE_PATH 7
+/*
+    index for get path write
+*/
+typedef enum{
+    mon,tue,wed,thu,
+    fri,sat,sun
+}path_index_t;
 
 /*
     reset and initailize
@@ -77,11 +84,14 @@ int fo_reset(){
 #define is_raw_data_emtpy file_manager.raw_data.buffer ? 0 : 1
 #define is_buffer_data_emtpy file_manager.buffer_data.buffer ? 0 : 1
 
+#define sign_force_ 1
+#define sign_init_ 2
+#define sign_normal_ 0
 /*
     if sign force == 1 it will force to valid and it will reset all data in file manager 
 */
 int fo_load(const char *path,int8_t sign_force){
-    if(sign_force){
+    if(sign_force == sign_force_){
         // reset file manager
         fo_reset();
         goto valid;
@@ -135,6 +145,8 @@ int fo_load(const char *path,int8_t sign_force){
     return 1;
 }
 
+#define WRITE_END 1         // write mode 1
+#define WRITE_MIDDLE 2      // write mode 2
 /*
     if  sign force == 1 it will force to valid and it will reset all data in file manager
         sign force == 2 is init file
@@ -144,10 +156,8 @@ int fo_load(const char *path,int8_t sign_force){
         1 for write to the end (raw data + buffer data)
         2 for write to the middle (raw data to pointer start + buffer data + pointer end to end raw data)
 */
-#define WRITE_END 1
-#define WRITE_MIDDLE 2
-int fo_write(const char* path,int8_t sign_force,int8_t mode){ // TODO: test this function
-    if(sign_force == 2){
+int fo_write(const char* path,int8_t sign_force,int8_t mode){
+    if(sign_force == sign_init_){
         // initailize file
         FILE* fp = NULL;
         for(int i = 0; i < CAPACITY_FILE_PATH; i++){
@@ -162,7 +172,7 @@ int fo_write(const char* path,int8_t sign_force,int8_t mode){ // TODO: test this
         WARNING("raw data or new data to write is" ANSI_COLOR_RED " Empty " ANSI_COLOR_RESET);
         return 0;
     }
-    if(sign_force == 1){
+    if(sign_force == sign_force_){
         goto valid;
     }
     switch (file_manager.stage_file)
@@ -224,5 +234,6 @@ int fo_write(const char* path,int8_t sign_force,int8_t mode){ // TODO: test this
             return 0;
             break;
     }
+    file_manager.stage_file = WRITED;
     return 1;
 }

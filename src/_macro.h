@@ -11,6 +11,8 @@
 
 #define INFO(fmt, ...) printf(ANSI_COLOR_GREEN "[INFO] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
 #define WARNING(fmt, ...) printf(ANSI_COLOR_RED "[WARNING] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
+#define UTEST(fmt, ...) printf(ANSI_COLOR_YELLOW "[TEST] " ANSI_COLOR_RESET fmt "\n",##__VA_ARGS__)
+#define SUCCESS(fmt, ...) printf(ANSI_COLOR_GREEN "[SUCCESS] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
 
 #define BYPE 1 // 1 bype
 
