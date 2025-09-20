@@ -6,6 +6,8 @@
         "crtdefs.h": "c",
         "corecrt.h": "c",
         "_include.h": "c",
-        "test": "c"
+        "test": "c",
+        "_macro.h": "c",
+        "file_manager.h": "c"
     }
 }

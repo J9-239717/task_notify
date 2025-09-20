@@ -16,4 +16,10 @@
 
 #define BYPE 1 // 1 bype
 
+#define EQ_STR(str1,str2) strcmp(str1,str2) == 0 ? 1 : 0
+#define NOT_OVERFLOW(i,capacity) (((i) + 1) >= (capacity) ? 0 : 1)
+
+#define INVALID_ -1
+#define is_invalid(test) ((test) == INVALID_ ? 1 : 0) 
+
 #endif
