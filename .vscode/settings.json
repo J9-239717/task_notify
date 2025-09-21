@@ -8,6 +8,7 @@
         "_include.h": "c",
         "test": "c",
         "_macro.h": "c",
-        "file_manager.h": "c"
+        "file_manager.h": "c",
+        "process.h": "c"
     }
 }

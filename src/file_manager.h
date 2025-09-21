@@ -51,7 +51,6 @@ const char * all_path[] = {         // global file path
     "../data/sun.bin"
 };
 const char* magic_bype = "\"*\"";
-#define CAPACITY_FILE_PATH 7
 /*
     index for get path write
 */
@@ -101,21 +100,25 @@ int fo_load(const char *path,int8_t sign_force){
         case LOADED:{
             WARNING("file manager already loaded");
             INFO("If you want to load another file please reset");
-            return 0;
+            return INVALID_;
         }
         case EDITED:{
             WARNING("Your data in file manager still in edit part (dont save yet)");
             INFO("If you want to load another file please write it or reset");
-            return 0;
+            return INVALID_;
         }
-        case NOTTHING:
+        case NOTTHING:{
+            goto valid;
+            break;
+        }
         case WRITED :{
+            fo_reset();
             goto valid;
             break;
         }
         default:{
             WARNING("Invalid file manager please checking");
-            return 0;
+            return INVALID_;
         }
     }
     valid:
@@ -123,7 +126,7 @@ int fo_load(const char *path,int8_t sign_force){
     if(!fp){
         WARNING("Cant open your file, please check your file in folder data");
         WARNING("Error path: %s", path);
-        return 0;
+        return INVALID_;
     }
     fseek(fp, 0, SEEK_END);
     size_t size = ftell(fp);
@@ -132,7 +135,7 @@ int fo_load(const char *path,int8_t sign_force){
     if(size <= 0){
         WARNING("File is Empty");
         WARNING("Error path: %s", path);
-        return 0;
+        return INVALID_;
     }
     file_manager.raw_data.buffer = (char*)malloc(size +1); // +1 for null (\0) pointer
     file_manager.raw_data.capacity = size;
@@ -145,8 +148,24 @@ int fo_load(const char *path,int8_t sign_force){
     return 1;
 }
 
+/*
+    init file for writing
+*/
+int fo_init(path_index_t index){
+    FILE* fp = NULL;
+    fp = fopen(all_path[index], "wb");
+    if(!fp){
+        WARNING("Cant open file path %s", all_path[index]);
+        return INVALID_;
+    }
+    fwrite(magic_bype,BYPE,3,fp); // 3 is size of magic bype
+    fclose(fp);
+    return 1;
+}
+
 #define WRITE_END 1         // write mode 1
 #define WRITE_MIDDLE 2      // write mode 2
+#define WRITE_NOT_POINT 3 // write mode 3
 /*
     if  sign force == 1 it will force to valid and it will reset all data in file manager
         sign force == 2 is init file
@@ -155,22 +174,20 @@ int fo_load(const char *path,int8_t sign_force){
     mode argument:
         1 for write to the end (raw data + buffer data)
         2 for write to the middle (raw data to pointer start + buffer data + pointer end to end raw data)
+        3 for write only not point at pointer (raw data to pointer start + pointer end to end raw data)
 */
 int fo_write(const char* path,int8_t sign_force,int8_t mode){
     if(sign_force == sign_init_){
         // initailize file
-        FILE* fp = NULL;
-        for(int i = 0; i < CAPACITY_FILE_PATH; i++){
-            fp = fopen(all_path[i], "wb");
-            fwrite(magic_bype,BYPE,3,fp); // 3 is size of magic bype
-            fclose(fp);
+        for(int i = mon; i <= sun; i++){
+            if(is_invalid(fo_init(i))) return INVALID_;
         }
-        return 1;
+        return 0;
     }
     if(is_buffer_data_emtpy || is_raw_data_emtpy){
         emtpy:
         WARNING("raw data or new data to write is" ANSI_COLOR_RED " Empty " ANSI_COLOR_RESET);
-        return 0;
+        return INVALID_;
     }
     if(sign_force == sign_force_){
         goto valid;
@@ -182,12 +199,12 @@ int fo_write(const char* path,int8_t sign_force,int8_t mode){
             break;
         case WRITED:{
             WARNING("File is out of date you already write it");
-            return 0;
+            return INVALID_;
             break;
         }
         case LOADED:{
             WARNING("Nothing change in your File");
-            return 0;
+            return INVALID_;
             break;
         }
         case EDITED:
@@ -204,7 +221,7 @@ int fo_write(const char* path,int8_t sign_force,int8_t mode){
             if(!fp){
                 error_open_file:
                 WARNING("Can't open file with path: %s", path);
-                return 0;
+                return INVALID_;
             }
             fwrite(file_manager.raw_data.buffer, BYPE,
                     file_manager.raw_data.capacity, fp);
@@ -229,11 +246,51 @@ int fo_write(const char* path,int8_t sign_force,int8_t mode){
             fclose(fp);
             break;
         }
+        case WRITE_NOT_POINT:{
+            FILE* fp = fopen(path, "wb");
+            if(!fp){
+                goto error_open_file;
+            }
+            size_t len = file_manager.start - file_manager.raw_data.buffer;
+            fwrite(file_manager.raw_data.buffer, BYPE, len, fp);
+            len = file_manager.raw_data.capacity - len - (file_manager.end - file_manager.start);
+            fwrite(file_manager.end, BYPE, len, fp);
+            fclose(fp);
+            break;
+        }
         default:
             WARNING("Invalid file write mode is %d", mode);
-            return 0;
+            return INVALID_;
             break;
     }
     file_manager.stage_file = WRITED;
-    return 1;
+    return 0;
+}
+
+int fo_show(const char* path){
+    FILE* fp = fopen(path, "rb");
+    if(!fp){
+        WARNING("Can't open file with path: %s", path);
+        return INVALID_;
+    }
+    char c;
+    while((c = fgetc(fp)) != EOF) printf("%c", c);
+    return 0;
+}
+
+void fo_reset_buffer(){
+    if(is_buffer_data_emtpy) return;
+    free(file_manager.buffer_data.buffer);
+    file_manager.buffer_data.capacity = -1;
+}
+
+int fi_load_str(const char* payload){
+    file_manager.buffer_data.buffer = strdup(payload);
+    if(is_buffer_data_emtpy){
+        WARNING("Maybe heap is full this error from strdup");
+        return INVALID_;
+    }
+    file_manager.buffer_data.capacity = strlen(payload);
+    file_manager.stage_file = EDITED;
+    return 0;
 }

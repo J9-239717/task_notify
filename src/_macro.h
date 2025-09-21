@@ -13,6 +13,9 @@
 #define WARNING(fmt, ...) printf(ANSI_COLOR_RED "[WARNING] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
 #define UTEST(fmt, ...) printf(ANSI_COLOR_YELLOW "[TEST] " ANSI_COLOR_RESET fmt "\n",##__VA_ARGS__)
 #define SUCCESS(fmt, ...) printf(ANSI_COLOR_GREEN "[SUCCESS] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
+#define DEBUG(fmt, ...) printf(ANSI_COLOR_GREEN "[DEBUG] " ANSI_COLOR_RESET fmt "\n" ,##__VA_ARGS__)
+#define TASK(fmt, ...) printf("     " DOT fmt "\n", ##__VA_ARGS__)
+#define EMPTY() printf("     " ANSI_COLOR_CYAN "[EMPTY]" ANSI_COLOR_RESET "\n");
 
 #define BYPE 1 // 1 bype
 
@@ -20,6 +23,10 @@
 #define NOT_OVERFLOW(i,capacity) (((i) + 1) >= (capacity) ? 0 : 1)
 
 #define INVALID_ -1
-#define is_invalid(test) ((test) == INVALID_ ? 1 : 0) 
+static inline int is_invalid(int test){
+    return test == INVALID_ ? 1 : 0;
+}
+
+#define DOT "·"
 
 #endif

@@ -1,0 +1,8 @@
+Argument list for this program:
+    · [init|-init] for initalize file for first time or reset all
+    · [a|-a] [days] [message task] for add message task in to days
+    · [d|-d] [days] [index] done index task that day
+    · [clean|-clean] [days] clean the data that day
+Type of Argument:
+    days : mon, tue, wed, thu, fri, sat, sun
+    index : should the neural number upper zero

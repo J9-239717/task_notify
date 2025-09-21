@@ -1,2 +1,2 @@
 default:
-	gcc main.c -o ../bin/taskj9
+	gcc main.c -o ../bin/task
